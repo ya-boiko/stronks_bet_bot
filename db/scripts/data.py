@@ -1,4 +1,4 @@
-from db import Db
+from Db import Db
 
 
 db = Db("stronks_bot.db")

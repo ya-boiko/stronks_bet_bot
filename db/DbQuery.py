@@ -1,12 +1,43 @@
-from db import Db
+from db.Db import Db
 
 
-class DbQuery (Db):
+class DbQuery(Db):
     def get_all_tours(self):
         return self.query("""
             SELECT t.id AS id, 
                    t.name AS name
             FROM tours t;
+        """)
+
+    def get_all_tour_stages(self):
+        return self.query("""
+            SELECT ts.id AS id, 
+                   ts.tour_id AS tour_id,
+                   ts.stage_id AS stage_id,
+                   ts.is_active AS is_active
+            FROM tour_stages ts;
+        """)
+
+    def get_all_events(self):
+        return self.query("""
+            SELECT e.id AS id, 
+                   e.team_id_1 AS team_id_1,
+                   e.team_id_2 AS stage_id,
+                   e.tour_stage_id AS tour_stage_id,
+                   e.winner AS winner
+            FROM events e;
+        """)
+
+    def get_coming_bets(self):
+        return self.query("""
+            SELECT b.id as id,
+                   b.event_id as event_id, 
+                   b.match_id as match_id, 
+                   b.name as name, 
+                   b.who_winner as who_winner, 
+                   b.bet_won as bet_won
+            FROM bets b
+            WHERE b.bet_won IS NULL;
         """)
 
     def get_active_tour_stages_by_tour_id(self, tour_id):
@@ -113,4 +144,3 @@ class DbQuery (Db):
             query,
             [(user_id, bet_id)]
         )
-

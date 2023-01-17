@@ -1,80 +1,52 @@
-import logging
 import time
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from db import Db
-from queries import DbQuery
+import callbacks
+from callbacks import clb_names
+from db.Db import Db
+from db.DbQuery import DbQuery
 from settings import TOKEN, DB_NAME
 
-logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 db = Db(DB_NAME)
 queries = DbQuery(DB_NAME)
-prev = {i: "" for i in range(0, 10)}
+prev = {i: str() for i in range(0, 10)}
+prev[0] = callbacks.start_menu_clb
 btn_back_name = " < Назад"
+reply_markup = types.ReplyKeyboardRemove()
 
-# колбэк кнопки турниров
-tours = queries.get_all_tours()
-list_btn_tours_clb = []
-for tour in tours:
-    list_btn_tours_clb.append(f"tour_{tour['id']}")
-
-
-# колбэк кнопки стадий турниров
-tour_stages = db.query("""
-    SELECT id as id FROM tour_stages;
-""")
-list_btn_tour_stages_clb = []
-for tour_stage in tour_stages:
-    list_btn_tour_stages_clb.append(f"tour_stages_{tour_stage['id']}")
-
-
-# колбэк событий стадии турнира
-events = db.query("""
-    SELECT id as id FROM events;
-""")
-list_btn_events_clb = []
-for event in events:
-    list_btn_events_clb.append(f"event_{event['id']}")
-
-
-# колбэк ставки пользователя
-bets = db.query("""
-    SELECT b.id as id FROM bets b
-    WHERE b.bet_won IS NULL;
-""")
-list_btn_bets_clb = []
-list_btn_drop_bet_clb = []
-for bet in bets:
-    list_btn_bets_clb.append(f"bet_{bet['id']}")
-    list_btn_drop_bet_clb.append(f"drop_bet_{bet['id']}")
 
 @dp.message_handler(commands=['start'])
-async def show_tours(message: types.Message):
-    # кнопка турниров
-    tours = queries.get_all_tours()
+async def start_menu(message: types.Message):
+    await message.delete()
 
-    list_btn_tours = []
-    for tour in tours:
-        btn_tour = InlineKeyboardButton(tour["name"], callback_data=f"tour_{tour['id']}")
-        list_btn_tours.append(btn_tour)
-
-    show_tours = InlineKeyboardMarkup()
-    for button in list_btn_tours:
-        show_tours.add(button)
-        show_tours.row()
-
+    show_start_menu = get_start_menu()
     await message.answer(
-        text=f"STRONKS BET",
-        reply_markup=show_tours
+        text=f"STRONKS BET \nЗалупенди жб",
+        reply_markup=show_start_menu
     )
 
 
-@dp.callback_query_handler(text=list_btn_tours_clb)
+@dp.callback_query_handler(text=callbacks.start_menu_clb)
+async def callback_start_menu(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+
+    time.sleep(0.25)
+    await callback_query.message.delete()
+
+    show_start_menu = get_start_menu()
+    await bot.send_message(
+        callback_query.from_user.id,
+        text=f"STRONKS BET \nЗалупенди жб",
+        reply_markup=show_start_menu
+    )
+
+
+@dp.callback_query_handler(text=callbacks.tours_clb)
 async def callback_show_tour_stages(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
@@ -89,11 +61,11 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
     for tour_stage in tour_stages:
         if not tour_name:
             tour_name = tour_stage["tour_name"]
-        btn_tour_stage = InlineKeyboardButton(tour_stage["stage_name"],
-                                              callback_data=f"tour_stages_{tour_stage['tour_stage_id']}")
+        clb = f"{clb_names['tour_stages']}{tour_stage['tour_stage_id']}"
+        btn_tour_stage = InlineKeyboardButton(tour_stage["stage_name"], callback_data=clb)
         list_btn_tour_stages.append(btn_tour_stage)
 
-    bth_back(callback_query.data, 1)
+    list_btn_tour_stages.append(bth_back(callback_query.data, 1))
 
     show_tour_stages = InlineKeyboardMarkup()
     for button in list_btn_tour_stages:
@@ -107,7 +79,7 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
     )
 
 
-@dp.callback_query_handler(text=list_btn_tour_stages_clb)
+@dp.callback_query_handler(text=callbacks.tour_stages_clb)
 async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
@@ -123,10 +95,13 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
         if not stage_name:
             stage_name = event["stage_name"]
 
-        clb = f"event_{event['event_id']}"
-        home = f"{event['team1_name']} {event['team1_emoji']}"
-        guest = f"{event['team2_name']} {event['team2_emoji']}"
-        event_name = f"{home} - {guest}"
+        clb = f"{clb_names['event']}{event['event_id']}"
+        event_name = get_event_name(
+            event["team1_name"],
+            event["team1_emoji"],
+            event["team2_name"],
+            event["team2_emoji"],
+        )
         btn_event = InlineKeyboardButton(event_name, callback_data=clb)
         list_btn_events.append(btn_event)
 
@@ -144,7 +119,7 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
     )
 
 
-@dp.callback_query_handler(text=list_btn_events_clb)
+@dp.callback_query_handler(text=callbacks.events_clb)
 async def callback_show_events_bets(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
@@ -157,11 +132,16 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     list_btn_event_bets = []
     if user_bet:
         event_bet = queries.get_event_by_id(event_id)
-        home = f"{event_bet['team1_name']} {event_bet['team1_emoji']}"
-        guest = f"{event_bet['team2_name']} {event_bet['team2_emoji']}"
-        event_name = f"{home} - {guest}\n\nТвоя ставка - {user_bet.get('event_name')}"
 
-        clb = f"drop_bet_{user_bet['bet_id']}"
+        event_name = get_event_name(
+            event_bet["team1_name"],
+            event_bet["team1_emoji"],
+            event_bet["team2_name"],
+            event_bet["team2_emoji"],
+        )
+        event_name += f"\n\nТвоя ставка - {user_bet.get('event_name')}"
+
+        clb = f"{clb_names['drop_bet']}{user_bet['bet_id']}"
         btn_change_bet = InlineKeyboardButton("Удалить ставку", callback_data=clb)
         list_btn_event_bets.append(btn_change_bet)
     else:
@@ -169,11 +149,14 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         event_name = False
         for event_bet in event_bets:
             if not event_name:
-                home = f"{event_bet['team1_name']} {event_bet['team1_emoji']}"
-                guest = f"{event_bet['team2_name']} {event_bet['team2_emoji']}"
-                event_name = f"{home} - {guest}"
+                event_name = get_event_name(
+                    event_bet["team1_name"],
+                    event_bet["team1_emoji"],
+                    event_bet["team2_name"],
+                    event_bet["team2_emoji"],
+                )
 
-            clb = f"bet_{event_bet['bet_id']}"
+            clb = f"{clb_names['bet']}{event_bet['bet_id']}"
             btn_event_bet = InlineKeyboardButton(event_bet['bet_name'], callback_data=clb)
             list_btn_event_bets.append(btn_event_bet)
 
@@ -191,7 +174,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     )
 
 
-@dp.callback_query_handler(text=list_btn_bets_clb)
+@dp.callback_query_handler(text=callbacks.bets_clb)
 async def callback_add_user_bet(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
@@ -213,7 +196,7 @@ async def callback_add_user_bet(callback_query: types.CallbackQuery):
     )
 
 
-@dp.callback_query_handler(text=list_btn_drop_bet_clb)
+@dp.callback_query_handler(text=callbacks.drop_bet_clb)
 async def callback_drop_user_bet(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
@@ -234,11 +217,35 @@ async def callback_drop_user_bet(callback_query: types.CallbackQuery):
     )
 
 
+def get_event_name(team1_name, team1_emoji, team2_name, team2_emoji):
+    home = f"{team1_name} {team1_emoji}"
+    guest = f"{team2_name} {team2_emoji}"
+    return f"{home} - {guest}"
+
+
 def bth_back(callback_data, lvl):
     global prev
     btn_back = InlineKeyboardButton(btn_back_name, callback_data=prev[lvl-1])
     prev[lvl] = callback_data
     return btn_back
+
+
+def get_start_menu():
+    # кнопка турниров
+    tours = queries.get_all_tours()
+
+    list_btn_tours = []
+    for tour in tours:
+        clb = f"{clb_names['tour']}{tour['id']}"
+        btn_tour = InlineKeyboardButton(tour["name"], callback_data=clb)
+        list_btn_tours.append(btn_tour)
+
+    show_start_menu = InlineKeyboardMarkup()
+    for button in list_btn_tours:
+        show_start_menu.add(button)
+        show_start_menu.row()
+
+    return show_start_menu
 
 
 if __name__ == '__main__':

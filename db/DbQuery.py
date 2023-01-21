@@ -144,3 +144,29 @@ class DbQuery(Db):
             query,
             [(user_id, bet_id)]
         )
+
+    def get_event_matches(self, event_id):
+        return self.query("""
+            SELECT m.id AS match_id,
+                   ev.id AS event_id,
+                   t1.code AS team1_code,
+                   t1.name AS team1_name,
+                   t1.emoji AS team1_emoji,
+                   t2.code AS team2_code,
+                   t2.name AS team2_name,
+                   t2.emoji AS team2_emoji,
+                   m.day AS match_day,
+                   m.home_team AS home_team,
+                   m.result AS result,
+                   m.is_over AS is_over,
+                   m.winner AS winner,
+                   s.name  AS stage_name
+            FROM matches m
+             JOIN events ev ON ev.id = m.event_id
+             JOIN teams t1 ON t1.id = ev.team_id_1
+             JOIN teams t2 ON t2.id = ev.team_id_2
+             JOIN tour_stages ts ON ts.id = ev.tour_stage_id
+             JOIN stages s ON s.id = ts.stage_id
+            WHERE ev.id = {0}
+            ORDER BY m.id;
+        """.format(event_id))

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
-from aiogram.utils.markdown import text, bold, italic, code, pre
+from aiogram.utils.markdown import text, bold, italic, code, pre, hunderline, hbold
 
 import callbacks
 from callbacks import clb_names
@@ -30,7 +30,7 @@ async def start_menu(message: types.Message):
         })
         prev[str(message.chat.id)][0] = callbacks.start_menu_clb
 
-    await message.delete()
+    # await message.delete()
 
     show_start_menu = get_start_menu()
     await message.answer(
@@ -63,7 +63,7 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
     time.sleep(0.25)
     await callback_query.message.delete()
 
-    tour_id = callback_query.data.replace("tour_", "")
+    tour_id = callback_query.data.replace(clb_names.get("tour"), "")
     tour_stages = queries.get_active_tour_stages_by_tour_id(tour_id)
 
     list_btn_tour_stages = []
@@ -97,7 +97,7 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
     time.sleep(0.25)
     await callback_query.message.delete()
 
-    tour_stage_id = callback_query.data.replace("tour_stages_", "")
+    tour_stage_id = callback_query.data.replace(clb_names.get("tour_stages"), "")
     events = queries.get_events_by_tour_stage_id(tour_stage_id)
 
     stage_name = False
@@ -115,6 +115,12 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
         )
         btn_event = InlineKeyboardButton(event_name, callback_data=clb)
         list_btn_events.append(btn_event)
+
+    btn_user_bets = InlineKeyboardButton(
+        "Мои ставки 🤙",
+        callback_data=f"{clb_names.get('tour_stage_user_bets')}{tour_stage_id}"
+    )
+    list_btn_events.append(btn_user_bets)
 
     list_btn_events.append(bth_back(callback_query, 2))
 
@@ -138,7 +144,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     time.sleep(0.25)
     await callback_query.message.delete()
 
-    event_id = callback_query.data.replace("event_", "")
+    event_id = callback_query.data.replace(clb_names.get("event"), "")
 
     user_bet = queries.check_user_bet_on_event(callback_query.from_user.id, event_id)
     list_btn_event_bets = []
@@ -174,7 +180,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         matches_text += f"{match.get('match_day')} \n{match_name}\n\n"
 
     if user_bet:
-        event_name += f"Твоя ставка - {user_bet.get('event_name')}"
+        event_name += f"Твоя ставка - {user_bet.get('bet_name')}"
 
         if user_bet.get("bet_won") == 1:
             event_name += bold("\n\nСтавка победила ✅")
@@ -216,7 +222,7 @@ async def callback_add_user_bet(callback_query: types.CallbackQuery):
     time.sleep(0.25)
     await callback_query.message.delete()
 
-    bet_id = callback_query.data.replace("bet_", "")
+    bet_id = callback_query.data.replace(clb_names.get("bet"), "")
     queries.add_user_bet(callback_query.from_user.id, bet_id)
 
     show_btn = InlineKeyboardMarkup()
@@ -239,7 +245,7 @@ async def callback_drop_user_bet(callback_query: types.CallbackQuery):
     time.sleep(0.25)
     await callback_query.message.delete()
 
-    bet_id = callback_query.data.replace("drop_bet_", "")
+    bet_id = callback_query.data.replace(clb_names.get("drop_bet"), "")
     queries.del_user_bet(callback_query.from_user.id, bet_id)
 
     show_btn = InlineKeyboardMarkup()
@@ -251,6 +257,56 @@ async def callback_drop_user_bet(callback_query: types.CallbackQuery):
         text=f"Cтавка успешно удалена",
         reply_markup=show_btn,
         parse_mode=ParseMode.MARKDOWN
+    )
+
+
+@dp.callback_query_handler(text=callbacks.tour_stage_user_bets_clb)
+async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+
+    time.sleep(0.25)
+    await callback_query.message.delete()
+
+    tour_stage_id = callback_query.data.replace(clb_names.get("tour_stage_user_bets"), "")
+    user_bets = queries.get_user_bets_on_tour_stage(callback_query.from_user.id, tour_stage_id)
+
+    user_bets_text = ""
+    if not user_bets:
+        user_bets_text += "Ставок на эту стадию еще нет\n"
+
+    for bet in user_bets:
+        if user_bets_text == "":
+            user_bets_text = f"{bet.get('tour_name')}\n"
+            user_bets_text += f"{bet.get('stage_name')}\n\n"
+
+        event_name = get_event_name(
+            team1_name=bet.get('team1_name'),
+            team1_emoji=bet.get('team1_emoji'),
+            team2_name=bet.get('team2_name'),
+            team2_emoji=bet.get('team2_emoji'),
+            winner=bet.get("winner")
+        )
+
+        user_bets_text += f"{event_name}\n"
+
+        bet_won = ""
+        if bet.get("bet_won") == 1:
+            bet_won += bold("✅ ")
+        elif bet.get("bet_won") == -1:
+            bet_won += bold("❌ ")
+
+        bet_name = hunderline(bet.get('bet_name'))
+        user_bets_text += f"{bet_won}{bet_name}\n\n"
+
+    show_btn = InlineKeyboardMarkup()
+    show_btn.add(bth_back(callback_query, 3))
+    show_btn.row()
+
+    await bot.send_message(
+        callback_query.from_user.id,
+        text=user_bets_text,
+        reply_markup=show_btn,
+        parse_mode=ParseMode.HTML
     )
 
 
@@ -275,11 +331,26 @@ def get_match_with_result(match_name: str, result: str) -> str:
 
 def bth_back(callback, lvl):
     global prev
-    btn_back = InlineKeyboardButton(
-        btn_back_name,
-        callback_data=prev[str(callback.from_user.id)][lvl-1]
-    )
+    user_id = str(callback.from_user.id)
+
+    if user_id not in prev:
+        prev.update({
+            user_id: {i: str() for i in range(0, 10)}
+        })
+        prev[user_id][0] = callbacks.start_menu_clb
+
+        btn_back = InlineKeyboardButton(
+            btn_back_name,
+            callback_data=prev[user_id][0]
+        )
+    else:
+        btn_back = InlineKeyboardButton(
+            btn_back_name,
+            callback_data=prev[user_id][lvl - 1]
+        )
+
     prev[str(callback.from_user.id)][lvl] = callback.data
+
     return btn_back
 
 

@@ -274,7 +274,10 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
     if not user_bets:
         user_bets_text += "Ставок на эту стадию еще нет\n"
 
+    count = 0
     for bet in user_bets:
+        count += 1
+
         if user_bets_text == "":
             user_bets_text = f"{bet.get('tour_name')}\n"
             user_bets_text += f"{bet.get('stage_name')}\n\n"
@@ -287,7 +290,7 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
             winner=bet.get("winner")
         )
 
-        user_bets_text += f"{event_name}\n"
+        user_bets_text += f"{count}. {event_name}\n"
 
         bet_won = ""
         if bet.get("bet_won") == 1:

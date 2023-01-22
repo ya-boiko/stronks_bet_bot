@@ -49,7 +49,7 @@ class Db:
         if len(rows) > 0:
             return rows.pop(0)
         else:
-            return []
+            return {}
 
     def get_db_name(self) -> str:
         """Получить название БД."""

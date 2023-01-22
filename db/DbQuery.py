@@ -33,8 +33,7 @@ class DbQuery(Db):
             SELECT b.id as id,
                    b.event_id as event_id, 
                    b.match_id as match_id, 
-                   b.name as name, 
-                   b.who_winner as who_winner, 
+                   b.name as name,
                    b.bet_won as bet_won
             FROM bets b
             WHERE b.bet_won IS NULL;
@@ -107,8 +106,7 @@ class DbQuery(Db):
                    ub.bet_id as bet_id,
                    b.event_id as event_id,
                    b.match_id as match_id,
-                   b.name as event_name,
-                   b.who_winner as who_winner,
+                   b.name as bet_name,
                    b.bet_won as bet_won
             FROM user_bets ub
             JOIN bets b on b.id = ub.bet_id
@@ -170,3 +168,30 @@ class DbQuery(Db):
             WHERE ev.id = {0}
             ORDER BY m.id;
         """.format(event_id))
+
+    def get_user_bets_on_tour_stage(self, user_id, tour_stage_id):
+        return self.query("""
+            SELECT ub.user_id as user_id,
+                   ub.bet_id as bet_id,
+                   b.event_id as event_id,
+                   b.match_id as match_id,
+                   b.name as bet_name,
+                   b.bet_won as bet_won,
+                   t1.name as team1_name,
+                   t1.emoji as team1_emoji,
+                   t2.name as team2_name,
+                   t2.emoji as team2_emoji,
+                   e.winner as winner,
+                   s.name as stage_name,
+                   t.name as tour_name
+            FROM user_bets ub
+            JOIN bets b on b.id = ub.bet_id
+            JOIN events e on e.id = b.event_id
+            JOIN teams t1 on t1.id = e.team_id_1
+            JOIN teams t2 on t2.id = e.team_id_2
+            JOIN tour_stages ts on ts.id = e.tour_stage_id
+            JOIN tours t on t.id = ts.tour_id
+            JOIN stages s on s.id = ts.stage_id
+            WHERE ub.user_id = {0}
+            AND e.tour_stage_id = {1};
+        """.format(user_id, tour_stage_id))

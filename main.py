@@ -129,6 +129,16 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
         show_events.add(button)
         show_events.row()
 
+    user_info = queries.get_user_by_tg_id(callback_query.from_user.id)
+    if not user_info:
+        from_user = callback_query.from_user
+        queries.add_user(
+            tg_id=from_user.id,
+            login=from_user.mention,
+            name=from_user.first_name,
+            surname=from_user.last_name
+        )
+
     await bot.send_message(
         callback_query.from_user.id,
         text=f"{stage_name}",

@@ -193,5 +193,26 @@ class DbQuery(Db):
             JOIN tours t on t.id = ts.tour_id
             JOIN stages s on s.id = ts.stage_id
             WHERE ub.user_id = {0}
-            AND e.tour_stage_id = {1};
+            AND e.tour_stage_id = {1}
+            ORDER BY b.event_id;
         """.format(user_id, tour_stage_id))
+
+    def add_user(self, tg_id, login, name, surname):
+        query = """
+            INSERT INTO users (tg_id, login, name, surname)
+            VALUES (?, ?, ?, ?)
+        """
+        self.insert(
+            query,
+            [(tg_id, login, name, surname)]
+        )
+
+    def get_user_by_tg_id(self, tg_id):
+        return self.query_fetchone("""
+            SELECT u.tg_id as tg_id,
+                   u.login as login,
+                   u.name as name,
+                   u.surname as surname
+            FROM users u
+            WHERE u.tg_id = {0};
+        """.format(tg_id))

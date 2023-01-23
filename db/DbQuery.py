@@ -216,3 +216,29 @@ class DbQuery(Db):
             FROM users u
             WHERE u.tg_id = {0};
         """.format(tg_id))
+
+    def get_users_bets_on_event(self, event_id):
+        return self.query("""
+            SELECT ub.user_id as user_id,
+                   ub.bet_id as bet_id,
+                   b.event_id as event_id,
+                   b.match_id as match_id,
+                   b.name as bet_name,
+                   b.bet_won as bet_won,
+                   t1.name as team1_name,
+                   t1.emoji as team1_emoji,
+                   t2.name as team2_name,
+                   t2.emoji as team2_emoji,
+                   e.winner as winner,
+                   u.login as user_login,
+                   u.name as user_name,
+                   u.surname as user_surname
+            FROM user_bets ub
+            JOIN bets b on b.id = ub.bet_id
+            JOIN events e on e.id = b.event_id
+            JOIN teams t1 on t1.id = e.team_id_1
+            JOIN teams t2 on t2.id = e.team_id_2
+            JOIN users u on ub.user_id = u.tg_id
+            WHERE b.event_id = {0}
+            ORDER BY b.event_id;
+        """.format(event_id))

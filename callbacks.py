@@ -8,6 +8,7 @@ clb_names = {
     "tour": "tour_",
     "tour_stages": "tour_stages_",
     "event": "event_",
+    "event_users_bets": "event_users_bets_",
     "bet": "bet_",
     "drop_bet": "drop_bet_",
     "tour_stage_user_bets": "tour_stage_user_bets_",
@@ -35,8 +36,10 @@ for tour_stage in tour_stages:
 # колбэк кнопки событий стадии турнира
 events = queries.get_all_events()
 events_clb = []
+event_users_bets_clb = []
 for event in events:
     events_clb.append(f"{clb_names['event']}{event['id']}")
+    event_users_bets_clb.append(f"{clb_names['event_users_bets']}{event['id']}")
 
 
 # колбэк кнопки ставки пользователя

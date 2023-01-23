@@ -1,4 +1,4 @@
-from Db import Db
+from db.Db import Db
 
 
 db = Db("stronks_bot.db")
@@ -80,5 +80,15 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS user_bets(
         user_id INT,
         bet_id INT DEFAULT NULL
+    );
+""")
+
+# таблица "Ставки пользователя"
+db.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        tg_id TEXT,
+        login TEXT DEFAULT '',
+        name TEXT DEFAULT '',
+        surname TEXT DEFAULT ''
     );
 """)

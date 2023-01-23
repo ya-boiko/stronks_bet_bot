@@ -210,6 +210,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     else:
         event_name += "Ставки уже не принимаются 😛"
 
+    list_btn_event_bets.append(btn_event_users_bets(event_id))
     list_btn_event_bets.append(bth_back(callback_query, 3))
 
     show_event_bets = InlineKeyboardMarkup()
@@ -308,8 +309,8 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         elif bet.get("bet_won") == -1:
             bet_won += bold("❌ ")
 
-        bet_name = hunderline(bet.get('bet_name'))
-        user_bets_text += f"{bet_won}{bet_name}\n\n"
+        bet_name = bold(bet.get('bet_name'))
+        user_bets_text += f"  {bet_won}{bet_name}\n\n"
 
     show_btn = InlineKeyboardMarkup()
     show_btn.add(bth_back(callback_query, 3))
@@ -319,7 +320,53 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         callback_query.from_user.id,
         text=user_bets_text,
         reply_markup=show_btn,
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.MARKDOWN
+    )
+
+
+@dp.callback_query_handler(text=callbacks.event_users_bets_clb)
+async def callback_sho_event_users_bets(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+
+    time.sleep(0.25)
+    await callback_query.message.delete()
+
+    event_id = callback_query.data.replace(clb_names.get("event_users_bets"), "")
+    users_bets = queries.get_users_bets_on_event(event_id)
+
+    msg_text = ""
+    if not users_bets:
+        msg_text += "Пока что никто не сделал ставку"
+    event_bets = {}
+    for bet in users_bets:
+        if bet.get("bet_id") not in event_bets:
+            event_bets.update({
+                bet.get("bet_id"): {
+                    "bet_name": bet.get("bet_name"),
+                    "users": []
+                }
+            })
+
+        user_name = f"  {bet.get('user_name')} {bet.get('user_surname')}"
+        if callback_query.from_user.id == bet.get("user_id"):
+            event_bets[bet.get("bet_id")]["users"].insert(0, bold(user_name))
+        else:
+            event_bets[bet.get("bet_id")]["users"].append(user_name)
+
+    for bet in event_bets.values():
+        msg_text += f"{bet.get('bet_name')}\n"
+        msg_text += "\n".join(bet.get('users')[:10])
+        msg_text += " \n\n"
+
+    show_btn = InlineKeyboardMarkup()
+    show_btn.add(bth_back(callback_query, 4))
+    show_btn.row()
+
+    await bot.send_message(
+        callback_query.from_user.id,
+        text=text(msg_text),
+        reply_markup=show_btn,
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -352,19 +399,22 @@ def bth_back(callback, lvl):
         })
         prev[user_id][0] = callbacks.start_menu_clb
 
-        btn_back = InlineKeyboardButton(
-            btn_back_name,
-            callback_data=prev[user_id][0]
-        )
-    else:
-        btn_back = InlineKeyboardButton(
-            btn_back_name,
-            callback_data=prev[user_id][lvl - 1]
-        )
+    prev_lvl = lvl-1 if prev[user_id][lvl-1] else 0
+    btn_back = InlineKeyboardButton(
+        btn_back_name,
+        callback_data=prev[user_id][prev_lvl]
+    )
 
     prev[str(callback.from_user.id)][lvl] = callback.data
 
     return btn_back
+
+
+def btn_event_users_bets(event_id):
+    return InlineKeyboardButton(
+        "Кто на что поставил",
+        callback_data=f"{clb_names.get('event_users_bets')}{event_id}"
+    )
 
 
 def get_start_menu():
@@ -383,6 +433,10 @@ def get_start_menu():
         show_start_menu.row()
 
     return show_start_menu
+
+
+def get_event_users_bets(event_id, user_id):
+    pass
 
 
 if __name__ == '__main__':

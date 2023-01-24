@@ -109,9 +109,9 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
         clb = f"{clb_names.get('event')}{event.get('event_id')}"
         event_name = get_event_name(
             event.get("team1_name"),
-            event.get("team1_emoji"),
+            "",
             event.get("team2_name"),
-            event.get("team2_emoji"),
+            "",
         )
         btn_event = InlineKeyboardButton(event_name, callback_data=clb)
         list_btn_events.append(btn_event)
@@ -170,17 +170,17 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         if match.get("home_team") == 2:
             match_name = get_event_name(
                 match.get("team1_name"),
-                match.get("team1_emoji"),
+                "",
                 match.get("team2_name"),
-                match.get("team2_emoji"),
+                "",
                 match.get("winner")
             )
         else:
             match_name = get_event_name(
                 match.get("team2_name"),
-                match.get("team2_emoji"),
+                "",
                 match.get("team1_name"),
-                match.get("team1_emoji"),
+                "",
                 match.get("winner")
             )
 
@@ -190,7 +190,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         matches_text += f"{match.get('match_day')} \n{match_name}\n\n"
 
     if user_bet:
-        event_name += f"Твоя ставка - {user_bet.get('bet_name')}"
+        event_name += f"Твоя ставка: \n{bold(user_bet.get('bet_name'))}"
 
         if user_bet.get("bet_won") == 1:
             event_name += bold("\n\nСтавка победила ✅")
@@ -243,7 +243,7 @@ async def callback_add_user_bet(callback_query: types.CallbackQuery):
     bet_name = queries.get_bet_name_by_id(bet_id)
     await bot.send_message(
         callback_query.from_user.id,
-        text=f"{bet_name} - ставка сделана!",
+        text=f"{bet_name} – ставка сделана!",
         reply_markup=show_btn,
         parse_mode=ParseMode.MARKDOWN
     )
@@ -285,32 +285,30 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
     if not user_bets:
         user_bets_text += "Ставок на эту стадию еще нет\n"
 
-    count = 0
     for bet in user_bets:
-        count += 1
-
         if user_bets_text == "":
             user_bets_text = f"{bet.get('tour_name')}\n"
             user_bets_text += f"{bet.get('stage_name')}\n\n"
 
         event_name = get_event_name(
             team1_name=bet.get('team1_name'),
-            team1_emoji=bet.get('team1_emoji'),
+            team1_emoji="",
             team2_name=bet.get('team2_name'),
-            team2_emoji=bet.get('team2_emoji'),
+            team2_emoji="",
             winner=bet.get("winner")
         )
+        user_bets_text += f"{hbold(event_name)}\n"
 
-        user_bets_text += f"{count}. {event_name}\n"
-
-        bet_won = ""
+        bet_name_split = bet.get('bet_name').split()
         if bet.get("bet_won") == 1:
-            bet_won += bold("✅ ")
+            emoji = "✅"
         elif bet.get("bet_won") == -1:
-            bet_won += bold("❌ ")
+            emoji = "❌"
+        else:
+            emoji = f"{bet_name_split[-1]} "
 
-        bet_name = bold(bet.get('bet_name'))
-        user_bets_text += f"  {bet_won}{bet_name}\n\n"
+        bet_name = f"{emoji} {' '.join(bet_name_split[0:-1])} {emoji}"
+        user_bets_text += f"{bet_name}\n\n"
 
     show_btn = InlineKeyboardMarkup()
     show_btn.add(bth_back(callback_query, 3))
@@ -320,12 +318,12 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         callback_query.from_user.id,
         text=user_bets_text,
         reply_markup=show_btn,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.HTML
     )
 
 
 @dp.callback_query_handler(text=callbacks.event_users_bets_clb)
-async def callback_sho_event_users_bets(callback_query: types.CallbackQuery):
+async def callback_show_event_users_bets(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
 
     time.sleep(0.25)
@@ -342,19 +340,25 @@ async def callback_sho_event_users_bets(callback_query: types.CallbackQuery):
         if bet.get("bet_id") not in event_bets:
             event_bets.update({
                 bet.get("bet_id"): {
-                    "bet_name": bet.get("bet_name"),
+                    "bet_name": bold(bet.get("bet_name")),
                     "users": []
                 }
             })
 
-        user_name = f"  {bet.get('user_name')} {bet.get('user_surname')}"
+        user_name = "👤 "
+        if bet.get('user_name'):
+            user_name += f"{bet.get('user_name')} "
+
+        if bet.get('user_surname'):
+            user_name += f"{bet.get('user_surname')} "
+
         if callback_query.from_user.id == bet.get("user_id"):
             event_bets[bet.get("bet_id")]["users"].insert(0, bold(user_name))
         else:
             event_bets[bet.get("bet_id")]["users"].append(user_name)
 
     for bet in event_bets.values():
-        msg_text += f"{bet.get('bet_name')}\n"
+        msg_text += f"{bet.get('bet_name')}\n\n"
         msg_text += "\n".join(bet.get('users')[:10])
         msg_text += " \n\n"
 
@@ -371,7 +375,7 @@ async def callback_sho_event_users_bets(callback_query: types.CallbackQuery):
 
 
 def get_team_name(team1_name: str, team1_emoji: str) -> str:
-    return f"{team1_name} {team1_emoji}"
+    return f"{team1_name} {team1_emoji}".strip()
 
 
 def get_event_name(team1_name, team1_emoji, team2_name, team2_emoji, winner = 0):
@@ -382,11 +386,11 @@ def get_event_name(team1_name, team1_emoji, team2_name, team2_emoji, winner = 0)
     elif winner == 2:
         home = text(bold(guest))
 
-    return f"{home} - {guest}"
+    return f"{home} – {guest}".strip()
 
 
 def get_match_with_result(match_name: str, result: str) -> str:
-    return match_name.replace(" - ", f" {result} ")
+    return match_name.replace(" – ", f" {result} ").strip()
 
 
 def bth_back(callback, lvl):
@@ -433,10 +437,6 @@ def get_start_menu():
         show_start_menu.row()
 
     return show_start_menu
-
-
-def get_event_users_bets(event_id, user_id):
-    pass
 
 
 if __name__ == '__main__':

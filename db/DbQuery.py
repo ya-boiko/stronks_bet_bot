@@ -59,7 +59,8 @@ class DbQuery(Db):
                    t2.code AS team2_code,
                    t2.name AS team2_name,
                    t2.emoji AS team2_emoji,
-                   s.name  AS stage_name
+                   s.name  AS stage_name,
+                   ev.winner as winner
             FROM events ev
              JOIN teams t1 ON t1.id = ev.team_id_1
              JOIN teams t2 ON t2.id = ev.team_id_2
@@ -158,6 +159,7 @@ class DbQuery(Db):
                    m.result AS result,
                    m.is_over AS is_over,
                    m.winner AS winner,
+                   s.id  AS stage_id,
                    s.name  AS stage_name
             FROM matches m
              JOIN events ev ON ev.id = m.event_id

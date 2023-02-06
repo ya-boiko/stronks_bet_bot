@@ -92,12 +92,3 @@ db.execute("""
         surname TEXT DEFAULT ''
     );
 """)
-
-# таблица "Администраторы"
-db.execute("""
-    CREATE TABLE IF NOT EXISTS admins(
-        id INT,
-        tg_id TEXT
-    );
-""")
-

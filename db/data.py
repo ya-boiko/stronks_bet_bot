@@ -1,5 +1,4 @@
 from Db import Db
-from settings import ADMINS
 
 
 db = Db("stronks_bot.db")
@@ -77,37 +76,34 @@ db = Db("stronks_bot.db")
 #               (3, 1, 3, 0),
 #               (4, 1, 4, 0),
 #           ])
-#
-#
-# def create_event_bets(db):
-#     events = db.query("""
-#         SELECT e.id, t1.name, t2.name, t1.emoji, t2.emoji FROM events e
-#         join teams t1 on t1.id = e.team_id_1
-#         join teams t2 on t2.id = e.team_id_2
-#         WHERE e.winner = -1 AND e.id NOT IN (SELECT event_id FROM bets);
-#     """)
-#
-#     bet_id = 1
-#
-#     params = []
-#     for event in events:
-#         for i in [1, 2]:
-#             bet = (
-#                 bet_id,
-#                 event[0],
-#                 None,
-#                 f"Пройдет {event[i]} {event[i+2]}",
-#                 i,
-#                 None
-#             )
-#             params.append(bet)
-#             bet_id += 1
-#
-#     db.insert("INSERT INTO bets(id, event_id, match_id, name, who_winner, bet_won) VALUES (?, ?, ?, ?, ?, ?);",
-#               params)
-#
-#
-# create_event_bets(db)
 
-for i, admin in enumerate(ADMINS):
-    db.insert("INSERT INTO admins(id, tg_id) VALUES (?, ?);", [(i+1, a) for i, a in enumerate(ADMINS)])
+
+def create_event_bets(db):
+    events = db.query("""
+        SELECT e.id, t1.name, t2.name, t1.emoji, t2.emoji FROM events e
+        join teams t1 on t1.id = e.team_id_1
+        join teams t2 on t2.id = e.team_id_2
+        WHERE e.winner = -1 AND e.id NOT IN (SELECT event_id FROM bets);
+    """)
+
+    bet_id = 1
+
+    params = []
+    for event in events:
+        for i in [1, 2]:
+            bet = (
+                bet_id,
+                event[0],
+                None,
+                f"Пройдет {event[i]} {event[i+2]}",
+                i,
+                None
+            )
+            params.append(bet)
+            bet_id += 1
+
+    db.insert("INSERT INTO bets(id, event_id, match_id, name, who_winner, bet_won) VALUES (?, ?, ?, ?, ?, ?);",
+              params)
+
+
+create_event_bets(db)

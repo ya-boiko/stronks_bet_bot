@@ -1,7 +1,8 @@
 from Db import Db
+from settings import DB_NAME
 
 
-db = Db("stronks_bot.db")
+db = Db(DB_NAME)
 
 # db.insert("INSERT INTO teams(id, name, code, emoji) VALUES (?, ?, ?, ?);",
 #           [

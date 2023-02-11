@@ -1,3 +1,5 @@
+import datetime
+
 from db.Db import Db
 
 
@@ -209,6 +211,15 @@ class DbQuery(Db):
             [(tg_id, login, name, surname)]
         )
 
+    def get_users(self):
+        return self.query("""
+            SELECT u.tg_id as tg_id,
+                   u.login as login,
+                   u.name as name,
+                   u.surname as surname
+            FROM users u;
+        """)
+
     def get_user_by_tg_id(self, tg_id):
         return self.query_fetchone("""
             SELECT u.tg_id as tg_id,
@@ -244,3 +255,51 @@ class DbQuery(Db):
             WHERE b.event_id = {0}
             ORDER BY b.event_id;
         """.format(event_id))
+
+    def update_match_info(self, match_id, result, is_over, winner):
+        query = """
+            UPDATE matches
+            SET result = ?,
+                is_over = ?,
+                winner = ?
+            WHERE id = ?;
+        """
+        self.update(
+            query,
+            [(result, is_over, winner, match_id)]
+        )
+
+    def get_today_matches(self):
+        day = datetime.datetime.today()
+        today = day.strftime("%d.%m.%Y")
+        tomorrow = (day + datetime.timedelta(days=1)).strftime("%d.%m.%Y")
+        return self.query("""
+            SELECT m.id AS match_id,
+                   m.day AS match_day,
+                   m.home_team AS home_team,
+                   m.result AS result,
+                   m.is_over AS is_over,
+                   m.winner AS winner,
+                   m.link AS link,
+                   m.start_time AS start_time,
+                   ev.id AS event_id,
+                   t1.code AS team1_code,
+                   t1.name AS team1_name,
+                   t1.emoji AS team1_emoji,
+                   t2.code AS team2_code,
+                   t2.name AS team2_name,
+                   t2.emoji AS team2_emoji,
+                   s.id  AS stage_id,
+                   s.name  AS stage_name,
+                   t.id  AS tour_id,
+                   t.name  AS tour_name
+            FROM matches m
+             JOIN events ev ON ev.id = m.event_id
+             JOIN teams t1 ON t1.id = ev.team_id_1
+             JOIN teams t2 ON t2.id = ev.team_id_2
+             JOIN tour_stages ts ON ts.id = ev.tour_stage_id
+             JOIN stages s ON s.id = ts.stage_id
+             JOIN tours t ON t.id = ts.tour_id
+            WHERE m.day IN ('{0}', '{1}') AND
+                  m.is_over = 0;
+        """.format(today, tomorrow))

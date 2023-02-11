@@ -63,3 +63,11 @@ class Db:
         """
         with self.__connection as connection:
             connection.executemany(query, data)
+
+    def update(self, query: str, data: list):
+        """Обновить в БД.
+
+        :param query: текст запроса;
+        :param data: обновленные данные.
+        """
+        self.insert(query, data)

@@ -470,7 +470,8 @@ async def info_message(tg_id, message_text):
     await bot.send_message(
         tg_id,
         text=message_text,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 

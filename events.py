@@ -16,9 +16,7 @@ headers = {
 }
 queries = DbQuery(DB_NAME)
 matches = queries.get_today_matches()
-users = queries.get_users(
-
-)
+users = queries.get_users()
 for match in matches:
     match_time_str = f"{match.get('match_day')} {match.get('start_time')}"
     match_time = datetime.datetime.strptime(

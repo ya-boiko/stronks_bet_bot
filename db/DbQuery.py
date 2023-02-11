@@ -257,17 +257,13 @@ class DbQuery(Db):
         """.format(event_id))
 
     def update_match_info(self, match_id, result, is_over, winner):
-        query = """
+        return self.update("""
             UPDATE matches
             SET result = ?,
                 is_over = ?,
                 winner = ?
-            WHERE id = ?;
-        """
-        self.update(
-            query,
-            [(result, is_over, winner, match_id)]
-        )
+            WHERE id = {0};
+        """.format(match_id), [(result, is_over, winner)])
 
     def get_today_matches(self):
         day = datetime.datetime.today()

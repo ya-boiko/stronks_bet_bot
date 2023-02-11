@@ -411,7 +411,7 @@ def get_event_name(team1_name, team1_emoji, team2_name, team2_emoji, winner = 0)
     if winner == 1:
         home = text(bold(home))
     elif winner == 2:
-        home = text(bold(guest))
+        guest = text(bold(guest))
 
     return f"{home} – {guest}".strip()
 
@@ -464,6 +464,14 @@ def get_start_menu():
         show_start_menu.row()
 
     return show_start_menu
+
+
+async def info_message(tg_id, message_text):
+    await bot.send_message(
+        tg_id,
+        text=message_text,
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 
 if __name__ == '__main__':

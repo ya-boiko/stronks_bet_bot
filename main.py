@@ -52,7 +52,8 @@ async def callback_start_menu(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"STRONKS BET \nЗалупенди жб",
         reply_markup=show_start_menu,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 
@@ -86,7 +87,8 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"{tour_name}",
         reply_markup=show_tour_stages,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 
@@ -143,7 +145,8 @@ async def callback_show_tour_stage_events(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"{stage_name}",
         reply_markup=show_events,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 
@@ -226,7 +229,8 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=text(f"{event_name}\n\n{matches_text}"),
         reply_markup=show_event_bets,
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
+        disable_notification=True
     )
 
 
@@ -249,7 +253,8 @@ async def callback_add_user_bet(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"Cтавка сделана!\n{bold(bet_name)}",
         reply_markup=show_btn,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 
@@ -271,7 +276,8 @@ async def callback_drop_user_bet(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"Cтавка удалена!",
         reply_markup=show_btn,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 
@@ -345,7 +351,8 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         callback_query.from_user.id,
         text=f"{user_bets_text}\n{no_bet_text}",
         reply_markup=show_btn,
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
+        disable_notification=True
     )
 
 
@@ -397,7 +404,8 @@ async def callback_show_event_users_bets(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=text(msg_text),
         reply_markup=show_btn,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
     )
 
 

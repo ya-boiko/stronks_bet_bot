@@ -32,7 +32,10 @@ for match in matches:
         url=match.get("link")
     )
     soap = BeautifulSoup(req.text, "lxml")
-    score = soap.find(id="score").text
+    try:
+        score = soap.find(id="score").text
+    except Exception as e:
+        continue
 
     match_info = {
         "match_id": match.get("match_id"),
@@ -75,7 +78,13 @@ for match in matches:
 
         update_match = True
 
-    if (match_time + datetime.timedelta(hours=4)) < datetime.datetime.today():
+    try:
+        is_finished_text = soap.find(id="status").find(class_="is-finished").text
+        is_finished = (is_finished_text.lower() == "конец матча")
+    except Exception as e:
+        is_finished = False
+
+    if is_finished:
         score_split = score.split(":")
         winner = -1
 

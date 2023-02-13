@@ -190,10 +190,10 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         if match.get("is_over") == 1:
             match_name = get_match_with_result(match_name, match.get("result"))
 
-        matches_text += f"{hunderline(match.get('match_day'))} \n{match_name}\n\n"
+        matches_text += f"{match.get('match_day')} \n{match_name}\n\n"
 
     if user_bet:
-        event_name += f"Твоя ставка: \n{hbold(user_bet.get('bet_name'))}"
+        event_name += f"Твоя ставка: \n{bold(user_bet.get('bet_name'))}"
 
         if user_bet.get("bet_won") == 1:
             event_name += "\n\nСтавка победила ✅"
@@ -229,7 +229,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=text(f"{event_name}\n\n{matches_text}"),
         reply_markup=show_event_bets,
-        parse_mode=ParseMode.HTML,
+        parse_mode=ParseMode.MARKDOWN,
         disable_notification=True
     )
 
@@ -310,7 +310,7 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
             team2_emoji="",
             winner=bet.get("winner")
         )
-        user_bets_text += f"{hbold(event_name)}\n"
+        user_bets_text += f"{bold(event_name)}\n"
 
         bet_name_split = bet.get('bet_name').split()
         if bet.get("bet_won") == 1:
@@ -341,7 +341,7 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         no_bet_text += f"{no_bet_event_name}\n"
 
     if no_bet_text:
-        no_bet_text = f"{hbold('События без твоей ставки:')}\n\n{no_bet_text}"
+        no_bet_text = f"{bold('События без твоей ставки:')}\n\n{no_bet_text}"
 
     show_btn = InlineKeyboardMarkup()
     show_btn.add(bth_back(callback_query, 3))
@@ -351,7 +351,7 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
         callback_query.from_user.id,
         text=f"{user_bets_text}\n{no_bet_text}",
         reply_markup=show_btn,
-        parse_mode=ParseMode.HTML,
+        parse_mode=ParseMode.MARKDOWN,
         disable_notification=True
     )
 

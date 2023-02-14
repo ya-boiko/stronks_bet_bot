@@ -110,4 +110,5 @@ for match in matches:
         match_name = get_event_name(**match_name_params)
         match_result += get_match_with_result(match_name, score)
         for user in users:
-            asyncio.run(info_message(user.get("tg_id"), match_result))
+            if user.get("enable_notifications"):
+                asyncio.run(info_message(user.get("tg_id"), match_result))

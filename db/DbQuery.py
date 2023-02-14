@@ -216,7 +216,8 @@ class DbQuery(Db):
             SELECT u.tg_id as tg_id,
                    u.login as login,
                    u.name as name,
-                   u.surname as surname
+                   u.surname as surname,
+                   u.enable_notifications as enable_notifications
             FROM users u;
         """)
 
@@ -225,7 +226,8 @@ class DbQuery(Db):
             SELECT u.tg_id as tg_id,
                    u.login as login,
                    u.name as name,
-                   u.surname as surname
+                   u.surname as surname,
+                   u.enable_notifications as enable_notifications
             FROM users u
             WHERE u.tg_id = {0};
         """.format(tg_id))

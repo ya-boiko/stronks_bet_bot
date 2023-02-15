@@ -26,7 +26,7 @@ for match in matches:
         "%d.%m.%Y %H:%M"
     )
 
-    if match_time > datetime.datetime.today():
+    if match_time > datetime.datetime.today() + datetime.timedelta(hours=3):
         continue
 
     req = requests.get(

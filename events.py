@@ -17,6 +17,8 @@ headers = {
 queries = DbQuery(DB_NAME)
 matches = queries.get_today_matches()
 users = queries.get_users()
+goals = []
+finished = []
 for match in matches:
     match_time_str = f"{match.get('match_day')} {match.get('start_time')}"
     match_time = datetime.datetime.strptime(
@@ -43,7 +45,7 @@ for match in matches:
         "is_over": match.get("is_over"),
         "winner": match.get("winner")
     }
-    update_match = False
+
     match_name = get_event_name(
         team1_name=match.get("team1_name"),
         team1_emoji=match.get("team1_emoji"),
@@ -56,10 +58,9 @@ for match in matches:
         "team1_emoji": match.get("team1_emoji"),
         "team2_name": match.get("team2_name"),
         "team2_emoji": match.get("team2_emoji"),
-
     }
 
-    match_result = ""
+    match_goals = False
     if match.get("result") != score and ":" in score:
         match_info.update({
             "result": score
@@ -76,7 +77,7 @@ for match in matches:
             "winner": goal
         })
 
-        update_match = True
+        match_goals = True
 
     try:
         is_finished_text = soap.find(id="status").find(class_="is-finished").text
@@ -84,6 +85,7 @@ for match in matches:
     except Exception as e:
         is_finished = False
 
+    match_finished = False
     if is_finished:
         score_split = score.split(":")
         winner = -1
@@ -101,14 +103,28 @@ for match in matches:
         match_name_params.update({
             "winner": winner
         })
-        match_result = "Матч завершен:\n\n"
-        update_match = True
 
-    if update_match:
+        match_finished = True
+
+    if match_goals or match_finished:
         queries.update_match_info(**match_info)
 
         match_name = get_event_name(**match_name_params)
-        match_result += get_match_with_result(match_name, score)
-        for user in users:
-            if user.get("enable_notifications"):
-                asyncio.run(info_message(user.get("tg_id"), match_result))
+        match_result = get_match_with_result(match_name, score)
+
+        if match_goals:
+            goals.append(match_result)
+
+        if match_finished:
+            finished.append(match_result)
+
+    msg_goals = "\n".join(goals)
+    msg_finished = "Матч окончен:\n\n"
+    msg_finished += "\n".join(finished)
+    for user in users:
+        if user.get("enable_notifications"):
+            if goals:
+                asyncio.run(info_message(user.get("tg_id"), msg_goals))
+
+            if finished:
+                asyncio.run(info_message(user.get("tg_id"), msg_finished))

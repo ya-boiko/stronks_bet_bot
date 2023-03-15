@@ -170,7 +170,7 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     )
     today = datetime.today()
     for match in event_matches:
-        if match.get("home_team") == 2:
+        if match.get("home_team") == 1:
             match_name = get_event_name(
                 match.get("team1_name"),
                 "",
@@ -201,8 +201,9 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
             event_name += "\n\nСтавка проиграла ❌"
         else:
             clb = f"{clb_names.get('drop_bet')}{user_bet.get('bet_id')}"
-            btn_change_bet = InlineKeyboardButton("Удалить ставку 🗑", callback_data=clb)
-            list_btn_event_bets.append(btn_change_bet)
+            if today < first_match_date:
+                btn_change_bet = InlineKeyboardButton("Удалить ставку 🗑", callback_data=clb)
+                list_btn_event_bets.append(btn_change_bet)
         bet_already_made = True
     elif today < first_match_date:
         event_bets = queries.get_bets_by_event_id(event_id)

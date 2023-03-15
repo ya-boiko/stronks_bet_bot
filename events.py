@@ -53,12 +53,20 @@ for match in matches:
         team2_emoji=match.get("team2_emoji")
     )
 
-    match_name_params = {
-        "team1_name": match.get("team1_name"),
-        "team1_emoji": match.get("team1_emoji"),
-        "team2_name": match.get("team2_name"),
-        "team2_emoji": match.get("team2_emoji"),
-    }
+    if match.get("home_team") == 2:
+        match_name_params = {
+            "team1_name": match.get("team2_name"),
+            "team1_emoji": match.get("team2_emoji"),
+            "team2_name": match.get("team1_name"),
+            "team2_emoji": match.get("team1_emoji"),
+        }
+    else:
+        match_name_params = {
+            "team1_name": match.get("team1_name"),
+            "team1_emoji": match.get("team1_emoji"),
+            "team2_name": match.get("team2_name"),
+            "team2_emoji": match.get("team2_emoji"),
+        }
 
     match_goals = False
     if match.get("result") != score and ":" in score:
@@ -118,13 +126,13 @@ for match in matches:
         if match_finished:
             finished.append(match_result)
 
-    msg_goals = "\n".join(goals)
-    msg_finished = "Матч окончен:\n\n"
-    msg_finished += "\n".join(finished)
-    for user in users:
-        if user.get("enable_notifications"):
-            if goals:
-                asyncio.run(info_message(user.get("tg_id"), msg_goals))
+msg_goals = "\n".join(goals)
+msg_finished = "Матч окончен:\n\n"
+msg_finished += "\n".join(finished)
+for user in users:
+    if user.get("enable_notifications") or True:
+        if goals:
+            asyncio.run(info_message(user.get("tg_id"), msg_goals))
 
-            if finished:
-                asyncio.run(info_message(user.get("tg_id"), msg_finished))
+        if finished:
+            asyncio.run(info_message(user.get("tg_id"), msg_finished))

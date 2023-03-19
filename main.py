@@ -311,7 +311,7 @@ async def callback_show_tour_stage_user_bets(callback_query: types.CallbackQuery
             team2_emoji="",
             winner=bet.get("winner")
         )
-        user_bets_text += f"{bold(event_name)}\n"
+        user_bets_text += f"{event_name}\n"
 
         bet_name_split = bet.get('bet_name').split()
         if bet.get("bet_won") == 1:

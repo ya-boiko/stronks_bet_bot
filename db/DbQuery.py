@@ -86,6 +86,25 @@ class DbQuery(Db):
             WHERE b.event_id = {0};
         """.format(event_id))
 
+    def get_tour_rating(self, tour_id: str):
+        return self.query("""
+            SELECT u.tg_id AS user_id,
+                   u.name AS user_name,
+                   u.surname AS user_surname,
+                   sum(b.bet_won) AS rating,
+                   t.name AS tour_name
+            FROM user_bets ub
+             JOIN users u ON ub.user_id = u.tg_id
+             JOIN bets b ON ub.bet_id = b.id
+             JOIN events e ON b.event_id = e.id
+             JOIN tour_stages ts ON e.tour_stage_id = ts.stage_id
+             JOIN tours t ON ts.tour_id = t.id
+            WHERE ts.tour_id = {0}
+                  AND b.bet_won <> -1
+            GROUP BY u.tg_id, u.name, u.surname, t.name
+            ORDER BY rating DESC;
+        """.format(tour_id))
+
     def add_user_bet(self, user_id, bet_id):
         query = """
             INSERT INTO user_bets (user_id, bet_id)

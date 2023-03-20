@@ -1,3 +1,4 @@
+import random
 import time
 from datetime import datetime
 
@@ -76,6 +77,10 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
         btn_tour_stage = InlineKeyboardButton(tour_stage.get("stage_name"), callback_data=clb)
         list_btn_tour_stages.append(btn_tour_stage)
 
+    clb = f"{clb_names.get('rating')}{tour_id}"
+    btn_tour_stage = InlineKeyboardButton("Список лидеров", callback_data=clb)
+    list_btn_tour_stages.append(btn_tour_stage)
+
     list_btn_tour_stages.append(bth_back(callback_query, 1))
 
     show_tour_stages = InlineKeyboardMarkup()
@@ -87,6 +92,67 @@ async def callback_show_tour_stages(callback_query: types.CallbackQuery):
         callback_query.from_user.id,
         text=f"{tour_name}",
         reply_markup=show_tour_stages,
+        parse_mode=ParseMode.MARKDOWN,
+        disable_notification=True
+    )
+
+
+@dp.callback_query_handler(text=callbacks.rating_clb)
+async def callback_show_rating(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+
+    time.sleep(0.25)
+    await callback_query.message.delete()
+
+    tour_id = callback_query.data.replace(clb_names.get("rating"), "")
+    tour_rating = queries.get_tour_rating(tour_id)
+
+    tour_name = False
+    rating_text = ""
+    position = 1
+    list_btn_rating = []
+    last_rating = None
+    for rating in tour_rating:
+        if not tour_name:
+            tour_name = rating.get("tour_name")
+
+        user_name = ""
+        if rating.get("user_name") and rating.get("user_surname"):
+            user_name += f"{rating.get('user_name')} {rating.get('user_surname')}"
+        elif rating.get("user_name"):
+            user_name += f"{rating.get('user_name')}"
+        else:
+            user_name += f"рандомный челик"
+
+        user_rating = int(rating.get("rating"))
+        if last_rating and last_rating > user_rating:
+            position += 1
+
+        if position == 1:
+            user_name = "🥇 " + user_name
+        elif position == 2:
+            user_name = "🥈 " + user_name
+        elif position == 3:
+            user_name = "🥉 " + user_name
+
+        rating_row = f"{user_name}: {str(user_rating)}"
+        if str(callback_query.from_user.id) == rating.get("user_id"):
+            rating_row = bold(rating_row)
+
+        rating_text += f"{rating_row}\n"
+        last_rating = user_rating
+
+    list_btn_rating.append(bth_back(callback_query, 2))
+
+    show_buttons = InlineKeyboardMarkup()
+    for button in list_btn_rating:
+        show_buttons.add(button)
+        show_buttons.row()
+
+    await bot.send_message(
+        callback_query.from_user.id,
+        text=f"{rating_text}",
+        reply_markup=show_buttons,
         parse_mode=ParseMode.MARKDOWN,
         disable_notification=True
     )

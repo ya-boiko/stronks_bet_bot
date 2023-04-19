@@ -3,11 +3,11 @@ import datetime
 import asyncio
 from aiogram import Bot
 import requests
+from time import sleep
 from bs4 import BeautifulSoup
 from db.DbQuery import DbQuery
 from settings import DB_NAME, TOKEN
 from main import get_event_name, get_match_with_result, info_message
-
 
 bot = Bot(token=TOKEN)
 headers = {
@@ -129,10 +129,17 @@ for match in matches:
 msg_goals = "\n".join(goals)
 msg_finished = "Матч окончен:\n\n"
 msg_finished += "\n".join(finished)
+count = 0
 for user in users:
     if user.get("enable_notifications") or True:
         if goals:
             asyncio.run(info_message(user.get("tg_id"), msg_goals))
+            count += 1
 
         if finished:
             asyncio.run(info_message(user.get("tg_id"), msg_finished))
+            count += 1
+
+        if count >= 10:
+            sleep(3)
+            count = 0

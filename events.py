@@ -131,7 +131,7 @@ msg_finished = "Матч окончен:\n\n"
 msg_finished += "\n".join(finished)
 count = 0
 for user in users:
-    if user.get("enable_notifications") or True:
+    if user.get("enable_notifications"):
         if goals:
             asyncio.run(info_message(user.get("tg_id"), msg_goals))
             count += 1

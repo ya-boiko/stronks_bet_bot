@@ -114,9 +114,17 @@ for match in matches:
 
         match_finished = True
 
-    if match_goals or match_finished:
         queries.update_match_info(**match_info)
+        ev = queries.get_event_by_match_id(match.get("match_id"))
+        queries.update_event_winner(ev.get("event_id"), winner)
+        ev_bets = queries.get_bets_by_match_id(match.get("match_id"))
+        for ev_bet in ev_bets:
+            if ev_bet.get("who_winner") == winner:
+                queries.update_bet_result(ev_bet.get("bet_id"), 1)
+            else:
+                queries.update_bet_result(ev_bet.get("bet_id"), -1)
 
+    if match_goals or match_finished:
         match_name = get_event_name(**match_name_params)
         match_result = get_match_with_result(match_name, score)
 

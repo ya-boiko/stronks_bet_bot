@@ -86,6 +86,22 @@ class DbQuery(Db):
             WHERE b.event_id = {0};
         """.format(event_id))
 
+    def get_bets_by_match_id(self, match_id):
+        return self.query("""
+            SELECT b.id AS bet_id,
+                   b.name AS bet_name,
+                   t1.name AS team1_name,
+                   t1.emoji AS team1_emoji,
+                   t2.name AS team2_name,
+                   t2.emoji AS team2_emoji,
+                   b.who_winner AS who_winner
+            FROM bets b
+             JOIN events ev ON ev.id = b.event_id
+             JOIN teams t1 ON t1.id = ev.team_id_1
+             JOIN teams t2 ON t2.id = ev.team_id_2
+            WHERE b.match_id = {0};
+        """.format(match_id))
+
     def get_tour_rating(self, tour_id: str):
         return self.query("""
             SELECT u.tg_id AS user_id,
@@ -153,6 +169,25 @@ class DbQuery(Db):
              JOIN stages s ON s.id = ts.stage_id
             WHERE ev.id = {0};
         """.format(event_id))
+
+    def get_event_by_match_id(self, match_id):
+        return self.query_fetchone("""
+            SELECT ev.id AS event_id,
+                   t1.code AS team1_code,
+                   t1.name AS team1_name,
+                   t1.emoji AS team1_emoji,
+                   t2.code AS team2_code,
+                   t2.name AS team2_name,
+                   t2.emoji AS team2_emoji,
+                   s.name  AS stage_name
+            FROM events ev
+             JOIN teams t1 ON t1.id = ev.team_id_1
+             JOIN teams t2 ON t2.id = ev.team_id_2
+             JOIN tour_stages ts ON ts.id = ev.tour_stage_id
+             JOIN stages s ON s.id = ts.stage_id
+             JOIN matches m ON m.event_id = ev.id
+            WHERE m.id = {0};
+        """.format(match_id))
 
     def del_user_bet(self, user_id, bet_id):
         query = """
@@ -285,6 +320,20 @@ class DbQuery(Db):
                 winner = ?
             WHERE id = {0};
         """.format(match_id), [(result, is_over, winner)])
+
+    def update_event_winner(self, event_id,  winner):
+        return self.update("""
+            UPDATE events
+            SET winner = ?
+            WHERE id = {0};
+        """.format(event_id), [(winner, )])
+
+    def update_bet_result(self, bet_id,  bet_won):
+        return self.update("""
+            UPDATE bets
+            SET bet_won = ?
+            WHERE id = {0};
+        """.format(bet_id), [(bet_won, )])
 
     def get_today_matches(self):
         day = datetime.datetime.today()

@@ -13,7 +13,7 @@ class Db:
         self.__db_name = db_name
 
         # Подключение к БД
-        self.__connection = sqlite3.connect(self.__db_name)
+        self.__connection = sqlite3.connect(self.__db_name, check_same_thread=False)
 
     def execute(self, query: str):
         """Запрос к БД.

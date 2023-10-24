@@ -231,10 +231,10 @@ async def callback_show_events_bets(callback_query: types.CallbackQuery):
     event_matches = queries.get_event_matches(event_id)
     matches_text = ""
     first_match_date = datetime.strptime(
-        event_matches[0].get("match_day"),
-        "%d.%m.%Y"
+        event_matches[0].get("match_day") + "T" + event_matches[0].get("match_time"),
+        "%d.%m.%YT%H:%M"
     )
-    today = datetime.today()
+    today = datetime.now()
     for match in event_matches:
         if match.get("home_team") == 1:
             match_name = get_event_name(

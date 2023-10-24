@@ -216,7 +216,8 @@ class DbQuery(Db):
                    m.is_over AS is_over,
                    m.winner AS winner,
                    s.id  AS stage_id,
-                   s.name  AS stage_name
+                   s.name  AS stage_name,
+                   m.start_time  AS match_time
             FROM matches m
              JOIN events ev ON ev.id = m.event_id
              JOIN teams t1 ON t1.id = ev.team_id_1
